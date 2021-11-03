@@ -1,0 +1,78 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "albomx-comics API.",
+        "title": "albomx-comics API",
+        "contact": {
+            "name": "Juan Espinoza",
+            "email": "juanmesp@hotmail.com"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0.0"
+    },
+    "basePath": "/",
+    "paths": {
+        "/hello": {
+            "get": {
+                "description": "Example",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Albomxcomics"
+                ],
+                "summary": "Example",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "To who am i saying hi?",
+                        "name": "name",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/HelloWorldResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "x-amazon-apigateway-integration": {
+                    "httpMethod": "POST",
+                    "passthroughBehavior": "when_no_match",
+                    "type": "aws_proxy",
+                    "uri": "${lambda_arn}"
+                }
+            }
+        }
+    },
+    "definitions": {
+        "HelloWorldResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "description": "All the available albomx-comics operations",
+            "name": "Albomxcomics"
+        }
+    ]
+}

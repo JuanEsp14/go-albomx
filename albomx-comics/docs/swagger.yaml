@@ -1,0 +1,51 @@
+basePath: /
+definitions:
+  HelloWorldResponse:
+    properties:
+      message:
+        type: string
+    type: object
+info:
+  contact:
+    email: juanmesp@hotmail.com
+    name: Juan Espinoza
+  description: albomx-comics API.
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  title: albomx-comics API
+  version: 1.0.0
+paths:
+  /hello:
+    get:
+      consumes:
+      - application/json
+      description: Example
+      parameters:
+      - description: To who am i saying hi?
+        in: query
+        name: name
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/HelloWorldResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+      summary: Example
+      tags:
+      - Albomxcomics
+      x-amazon-apigateway-integration:
+        httpMethod: POST
+        passthroughBehavior: when_no_match
+        type: aws_proxy
+        uri: ${lambda_arn}
+swagger: "2.0"
+tags:
+- description: All the available albomx-comics operations
+  name: Albomxcomics
