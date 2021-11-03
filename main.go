@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
+	"os"
 )
 
 // @title albomx-comics API
@@ -32,5 +33,8 @@ func main() {
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	router.Run("localhost:8080")
+	port := os.Getenv("PORT")
+	if port == "" { port = "8080"}
+
+	router.Run(":" + port)
 }
