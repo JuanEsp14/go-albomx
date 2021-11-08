@@ -1,17 +1,17 @@
 package main
 
 import (
-	"database/sql"
 	_ "github.com/JuanEsp14/go-albomx/albomx-comics/docs"
 	"github.com/JuanEsp14/go-albomx/albomx-comics/pkg"
 	"github.com/JuanEsp14/go-albomx/albomx-comics/pkg/example"
+	"github.com/JuanEsp14/go-albomx/albomx-comics/pkg/repository"
 	"github.com/JuanEsp14/go-albomx/albomx-comics/pkg/services"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
-	"gopkg.in/robfig/cron.v2"
+	"net/http"
 	"os"
 )
 
@@ -30,10 +30,19 @@ import (
 
 // @BasePath /
 func main() {
-	c := cron.New()
+	log := logrus.New()
+
+	log.Info("Connect DB successfully")
+
+	repository := repository.NewAlbomxComicsRepository(log)
+
 	//"*/1 * * * * *" -> un segundo
-	c.AddFunc("*/1 * * * *", services.ExpireProviderInvitation)
-	c.Start()
+	marvelService := services.NewMarvelService(log, new(http.Client), &repository)
+	//c := cron.New()
+	//c.AddFunc("*/1 * * * *", marvelService.RefreshDataBase)
+	//c.Start()
+	marvelService.RefreshDataBase()
+
 
 	router := gin.Default()
 	serviceSpotify := example.NewAlbomxComicsService()
@@ -44,28 +53,6 @@ func main() {
 
 	port := os.Getenv("PORT")
 	if port == "" { port = "8080"}
-
-
-	query := "CREATE TABLE IF NOT EXISTS characters(tick timestamp)"
-	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
-	if err != nil {
-		logrus.Errorf("Error opening database: %q", err)
-	}
-	defer db.Close()
-	res, err := db.Exec(query)
-	if err != nil {
-		logrus.Errorf("Error executing query")
-		logrus.Error(err)
-		return
-	}
-	logrus.Info("Connect DB successfully")
-	logrus.Info(res)
-
-	if _, err := db.Exec("INSERT INTO characters VALUES (now())"); err != nil {
-		logrus.Errorf("Error executing query")
-		logrus.Error(err)
-		return
-	}
 
 	router.Run(":" + port)
 }
