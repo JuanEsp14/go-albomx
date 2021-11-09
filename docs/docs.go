@@ -31,9 +31,9 @@ var doc = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/hello": {
+        "/characters": {
             "get": {
-                "description": "Example",
+                "description": "Get characters info",
                 "consumes": [
                     "application/json"
                 ],
@@ -43,12 +43,12 @@ var doc = `{
                 "tags": [
                     "Albomxcomics"
                 ],
-                "summary": "Example",
+                "summary": "get",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "To who am i saying hi?",
-                        "name": "name",
+                        "description": "To who am i getting?",
+                        "name": "avengerId",
                         "in": "query"
                     }
                 ],
@@ -56,7 +56,7 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/HelloWorldResponse"
+                            "$ref": "#/definitions/CharactersResponse"
                         }
                     },
                     "400": {
@@ -65,22 +65,88 @@ var doc = `{
                             "type": "string"
                         }
                     }
-                },
-                "x-amazon-apigateway-integration": {
-                    "httpMethod": "POST",
-                    "passthroughBehavior": "when_no_match",
-                    "type": "aws_proxy",
-                    "uri": "${lambda_arn}"
+                }
+            }
+        },
+        "/collaborators": {
+            "get": {
+                "description": "Get collaborators info",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Albomxcomics"
+                ],
+                "summary": "get",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "To who am i getting?",
+                        "name": "avengerId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/CollaboratorsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
                 }
             }
         }
     },
     "definitions": {
-        "HelloWorldResponse": {
+        "CharactersResponse": {
             "type": "object",
             "properties": {
-                "message": {
+                "characters": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "lastSync": {
                     "type": "string"
+                }
+            }
+        },
+        "CollaboratorsResponse": {
+            "type": "object",
+            "properties": {
+                "colorists": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "editors": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "lastSync": {
+                    "type": "string"
+                },
+                "writers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         }

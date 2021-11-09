@@ -55,6 +55,40 @@ func (r *AlbomxComicsRepository) InitializeDataBase() {
 	}
 }
 
+func (r *AlbomxComicsRepository) GetCollaborators(id string) (*dto.CollaboratorsResponse, error){
+	r.logger.Infof("Getting collaborators to id %s", id)
+	db := r.GetConnection()
+	rowsComic, err := db.Query("SELECT * FROM comics WHERE characterName = $1", id)
+	if err != nil {
+		r.logger.Error("Error getting comic. ", err)
+		return nil, err
+	}
+	rowsCollaborator, err := db.Query("SELECT * FROM collaborators WHERE comicId = $1", id)
+	if err != nil {
+		r.logger.Error("Error getting comic. ", err)
+		return nil, err
+	}
+	db.Close()
+	return r.getCollaboratorsResponse(rowsComic, rowsCollaborator)
+}
+
+func (r *AlbomxComicsRepository) GetCharacters(id string) (*dto.CharactersResponse, error){
+	r.logger.Infof("Getting collaborators to id %s", id)
+	db := r.GetConnection()
+	rowsComic, err := db.Query("SELECT * FROM comics WHERE characterName = $1", id)
+	if err != nil {
+		r.logger.Error("Error getting comic. ", err)
+		return nil, err
+	}
+	rowsCharacter, err := db.Query("SELECT * FROM characters WHERE comicId = $1", id)
+	if err != nil {
+		r.logger.Error("Error getting comic. ", err)
+		return nil, err
+	}
+	db.Close()
+	return r.getCharactersResponse(rowsComic, rowsCharacter)
+}
+
 func (r *AlbomxComicsRepository) UpdateDatabase(response *dto.MarvelComicsResponse, characterName string) {
 	r.logger.Info("Updating data base")
 	collaborators := new(dto.CollaboratorsResponse)
@@ -72,7 +106,7 @@ func (r *AlbomxComicsRepository) UpdateDatabase(response *dto.MarvelComicsRespon
 				collaborators.Editors = append(collaborators.Editors, collaborator.Name)
 			case writer:
 				r.logger.Info("Collaborator is writer")
-				collaborators.Writers = append(collaborators.Editors, collaborator.Name)
+				collaborators.Writers = append(collaborators.Writers, collaborator.Name)
 			case colorist:
 				r.logger.Info("Collaborator is colorist")
 				collaborators.Colorists = append(collaborators.Colorists, collaborator.Name)
@@ -198,16 +232,16 @@ func (r *AlbomxComicsRepository) updateCollaboratorsTable(id string, collaborato
 	}
 
 	for _, collaborator := range collaborators.Editors {
-		uniqueId := fmt.Sprintf("%s%s%s", collaborator, colorist, id)
-		if _, err := db.Query(query, collaborator, colorist, id, uniqueId); err != nil {
+		uniqueId := fmt.Sprintf("%s%s%s", collaborator, editor, id)
+		if _, err := db.Query(query, collaborator, editor, id, uniqueId); err != nil {
 			r.logger.Error("Error added new comicId. ", query, err)
 			return err
 		}
 	}
 
 	for _, collaborator := range collaborators.Writers {
-		uniqueId := fmt.Sprintf("%s%s%s", collaborator, colorist, id)
-		if _, err := db.Query(query, collaborator, colorist, id, uniqueId); err != nil {
+		uniqueId := fmt.Sprintf("%s%s%s", collaborator, writer, id)
+		if _, err := db.Query(query, collaborator, writer, id, uniqueId); err != nil {
 			r.logger.Error("Error added new comicId. ", query, err)
 			return err
 		}
@@ -241,24 +275,65 @@ func (r *AlbomxComicsRepository) updateCharactersTable(id string, characters *dt
 	return nil
 }
 
-/**
-db := r.GetConnection()
-	rows, err := db.Query("SELECT * FROM collaborators")
-	if err != nil {
-		r.logger.Error("Error added new comicId. ", err)
-		return err
-	}
-	db.Close()
-	for rows.Next() {
-		var comic dto.CollaboratorDb
-		if err = rows.Scan(&comic.CollaboratorName, &comic.Rol, &comic.ComicId, &comic.UniqueId); err != nil {
-			r.logger.Error("Error added new comicId. ", err)
-			return err
+func (r *AlbomxComicsRepository) getCollaboratorsResponse(rowsComic *sql.Rows, rowsCollaborator *sql.Rows) (*dto.CollaboratorsResponse, error) {
+	response := dto.CollaboratorsResponse{}
+	for rowsComic.Next() {
+		var comic dto.ComicDb
+		if err := rowsComic.Scan(&comic.CharacterName, &comic.LastSync); err != nil {
+			r.logger.Error("Error getting comic. ", err)
+			return nil, err
 		}
-		r.logger.Info("CollaboratorName ", comic.CollaboratorName)
-		r.logger.Info("Rol ", comic.Rol)
-		r.logger.Info("ComicId ", comic.ComicId)
+		response.LastSync = comic.LastSync
+		for rowsCollaborator.Next(){
+			collaborator := new(dto.CollaboratorDb)
+			if err := rowsCollaborator.Scan(&collaborator.CollaboratorName, &collaborator.Role, &collaborator.ComicId, &collaborator.UniqueId); err != nil {
+				r.logger.Error("Error getting collaborator. ", err)
+				return nil, err
+			}
+			switch collaborator.Role {
+			case editor:
+				r.logger.Info("Collaborator is editor")
+				response.Editors = append(response.Editors, collaborator.CollaboratorName)
+			case writer:
+				r.logger.Info("Collaborator is writer")
+				response.Writers = append(response.Writers, collaborator.CollaboratorName)
+			case colorist:
+				r.logger.Info("Collaborator is colorist")
+				response.Colorists = append(response.Colorists, collaborator.CollaboratorName)
+			default:
+				r.logger.Info("Collaborator isn't editor, writer or colorist")
+			}
+		}
 
 	}
-	r.logger.Info(rows)
- */
+	r.logger.Info("Get collaborators")
+	return &response,	nil
+}
+
+func (r *AlbomxComicsRepository) getCharactersResponse(rowsComic *sql.Rows, rowsCharacter *sql.Rows) (*dto.CharactersResponse, error) {
+	response := new(dto.CharactersResponse)
+	response.Characters = make(map[string][]string)
+	for rowsComic.Next() {
+		var comic dto.ComicDb
+		if err := rowsComic.Scan(&comic.CharacterName, &comic.LastSync); err != nil {
+			r.logger.Error("Error getting comic. ", err)
+			return nil, err
+		}
+		response.LastSync = comic.LastSync
+		for rowsCharacter.Next(){
+			character := new(dto.CharacterDb)
+			if err := rowsCharacter.Scan(&character.CharacterName, &character.ComicName, &character.ComicId, &character.UniqueId); err != nil {
+				r.logger.Error("Error getting character. ", err)
+				return nil, err
+			}
+			if comics := response.Characters[character.CharacterName]; comics != nil{
+				response.Characters[character.CharacterName] = append(response.Characters[character.CharacterName], character.ComicName)
+			}else{
+				response.Characters[character.CharacterName] = []string{character.ComicName}
+			}
+		}
+
+	}
+	r.logger.Info("Get characters")
+	return response,	nil
+}

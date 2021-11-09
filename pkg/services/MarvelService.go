@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"github.com/JuanEsp14/go-albomx/albomx-comics/pkg"
 	"github.com/JuanEsp14/go-albomx/albomx-comics/pkg/dto"
 	"github.com/JuanEsp14/go-albomx/albomx-comics/pkg/repository"
 	"github.com/sirupsen/logrus"
@@ -27,12 +28,20 @@ type marvelService struct {
 	db 		*repository.AlbomxComicsRepository
 }
 
-func NewMarvelService(log *logrus.Logger, client dto.HTTPClient, repository *repository.AlbomxComicsRepository) marvelService {
-	return marvelService{
+func NewMarvelService(log *logrus.Logger, client dto.HTTPClient, repository *repository.AlbomxComicsRepository) pkg.AlbomxComicsService {
+	return &marvelService{
 		logger: log,
 		client: client,
 		db: repository,
 	}
+}
+
+func (s *marvelService) GetCharacters(request *dto.ComicRequest) (*dto.CharactersResponse, error){
+	return s.db.GetCharacters(request.AvengerId)
+}
+
+func (s *marvelService) GetCollaborators(request *dto.ComicRequest) (*dto.CollaboratorsResponse, error) {
+	return s.db.GetCollaborators(request.AvengerId)
 }
 
 func (s *marvelService) RefreshDataBase() {

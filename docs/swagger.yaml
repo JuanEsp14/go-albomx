@@ -1,9 +1,32 @@
 basePath: /
 definitions:
-  HelloWorldResponse:
+  CharactersResponse:
     properties:
-      message:
+      characters:
+        additionalProperties:
+          items:
+            type: string
+          type: array
+        type: object
+      lastSync:
         type: string
+    type: object
+  CollaboratorsResponse:
+    properties:
+      colorists:
+        items:
+          type: string
+        type: array
+      editors:
+        items:
+          type: string
+        type: array
+      lastSync:
+        type: string
+      writers:
+        items:
+          type: string
+        type: array
     type: object
 info:
   contact:
@@ -16,15 +39,15 @@ info:
   title: albomx-comics API
   version: 1.0.0
 paths:
-  /hello:
+  /characters:
     get:
       consumes:
       - application/json
-      description: Example
+      description: Get characters info
       parameters:
-      - description: To who am i saying hi?
+      - description: To who am i getting?
         in: query
-        name: name
+        name: avengerId
         type: string
       produces:
       - application/json
@@ -32,19 +55,38 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/HelloWorldResponse'
+            $ref: '#/definitions/CharactersResponse'
         "400":
           description: Bad Request
           schema:
             type: string
-      summary: Example
+      summary: get
       tags:
       - Albomxcomics
-      x-amazon-apigateway-integration:
-        httpMethod: POST
-        passthroughBehavior: when_no_match
-        type: aws_proxy
-        uri: ${lambda_arn}
+  /collaborators:
+    get:
+      consumes:
+      - application/json
+      description: Get collaborators info
+      parameters:
+      - description: To who am i getting?
+        in: query
+        name: avengerId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/CollaboratorsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+      summary: get
+      tags:
+      - Albomxcomics
 swagger: "2.0"
 tags:
 - description: All the available albomx-comics operations

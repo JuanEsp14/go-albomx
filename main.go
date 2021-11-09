@@ -3,11 +3,11 @@ package main
 import (
 	_ "github.com/JuanEsp14/go-albomx/albomx-comics/docs"
 	"github.com/JuanEsp14/go-albomx/albomx-comics/pkg"
-	"github.com/JuanEsp14/go-albomx/albomx-comics/pkg/example"
 	"github.com/JuanEsp14/go-albomx/albomx-comics/pkg/repository"
 	"github.com/JuanEsp14/go-albomx/albomx-comics/pkg/services"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
+	"github.com/robfig/cron"
 	"github.com/sirupsen/logrus"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
@@ -31,22 +31,15 @@ import (
 // @BasePath /
 func main() {
 	log := logrus.New()
-
-	log.Info("Connect DB successfully")
-
 	repository := repository.NewAlbomxComicsRepository(log)
 
-	//"*/1 * * * * *" -> un segundo
 	marvelService := services.NewMarvelService(log, new(http.Client), &repository)
-	//c := cron.New()
-	//c.AddFunc("*/1 * * * *", marvelService.RefreshDataBase)
-	//c.Start()
-	marvelService.RefreshDataBase()
-
+	c := cron.New()
+	c.AddFunc("0 0 23 * *", marvelService.RefreshDataBase)
+	c.Start()
 
 	router := gin.Default()
-	serviceSpotify := example.NewAlbomxComicsService()
-	controller := pkg.NewAlbomxComicsController(serviceSpotify, logrus.Logger{})
+	controller := pkg.NewAlbomxComicsController(marvelService, logrus.Logger{})
 	controller.SetupRouter(router)
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
