@@ -35,7 +35,7 @@ func main() {
 
 	marvelService := services.NewMarvelService(log, new(http.Client), &repository)
 	c := cron.New()
-	c.AddFunc("0 0 23 * *", marvelService.RefreshDataBase)
+	c.AddFunc("*/10 * * * *", marvelService.RefreshDataBase)
 	c.Start()
 
 	router := gin.Default()
